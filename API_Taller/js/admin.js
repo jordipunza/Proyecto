@@ -12,10 +12,15 @@ if (!token || !datosUsuario) {
 
 const URL_API = "https://proyecto-production-7568.up.railway.app/api";
 const URL_BACK = "https://proyecto-production-7568.up.railway.app";
-const listaObjetos = document.getElementById('listaObjetos');
+
+const listaAlquileres = document.getElementById('listaAlquileres');
+const listaVentas = document.getElementById('listaVentas');
 const formObjeto = document.getElementById('formObjeto');
 
-document.addEventListener('DOMContentLoaded', getObjetos);
+document.addEventListener('DOMContentLoaded', () => {
+    getObjetos();
+    getCitas();
+});
 
 async function getObjetos() {
     try {
@@ -26,12 +31,13 @@ async function getObjetos() {
     } catch (e) { console.error(e); }
 }
 
-// funcion cargar objetos
 function renderObjetos(objetos) {
-    listaObjetos.innerHTML = "";
+    listaAlquileres.innerHTML = "";
+    listaVentas.innerHTML = "";
+
     objetos.forEach(obj => {
         let imagen = obj.imagen ? `${URL_BACK}/${obj.imagen}` : "img/sinimagen.png";
-        listaObjetos.innerHTML += `
+        const filaHTML = `
             <tr>
                 <td>${obj.nombre}</td>
                 <td><img src="${imagen}" style="width:70px;height:70px;object-fit:cover;border-radius:8px;" onerror="this.src='img/sinimagen.png'"></td>
@@ -45,16 +51,21 @@ function renderObjetos(objetos) {
                 </td>
             </tr>
         `;
+
+        if (obj.tipo.toLowerCase() === 'alquiler') {
+            listaAlquileres.innerHTML += filaHTML;
+        } else {
+            listaVentas.innerHTML += filaHTML;
+        }
     });
 }
-// funcion inciar a 0 el popup para creacion
+
 function prepararNuevo() {
     formObjeto.reset();
     document.getElementById('objeto_id').value = "";
     document.getElementById('tituloModal').textContent = "Añadir Nuevo Objeto";
 }
 
-// funcion inciar a 0 el popup para editar
 function editarObjeto(obj) {
     document.getElementById('objeto_id').value = obj.id;
     document.getElementById('tituloModal').textContent = "Editar Objeto";
@@ -149,7 +160,7 @@ function verCita(cita) {
     btnFinalizar.style.display = cita.pendiente ? 'block' : 'none';
 
     contenedor.innerHTML = `
-        <p><strong>ID Cliente en Base de Datos:</strong> ${cita.idCliente || 'Sin cuenta de usuario'}</p>
+        <p><strong>ID Cliente:</strong> ${cita.idCliente || 'Sin cuenta'}</p>
         <p><strong>Cliente:</strong> ${cita.nombre}</p>
         <p><strong>Correo:</strong> ${cita.correo}</p>
         <p><strong>Teléfono:</strong> ${cita.telefono}</p>
@@ -170,16 +181,8 @@ async function finalizarCita() {
         await axios.put(`${URL_API}/citas/${id}`, { pendiente: false }, {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
-        
-        const modalElement = document.getElementById('modalObjeto');
         const modalInstance = bootstrap.Modal.getInstance(document.getElementById('modalVerCita'));
         if (modalInstance) modalInstance.hide();
-        
         getCitas();
     } catch (e) { console.error(e); }
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    getObjetos();
-    getCitas();
-});
